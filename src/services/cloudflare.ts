@@ -105,8 +105,7 @@ export class CloudflareRecordUpdateTask {
 				'Authorization': `Bearer ${this.context.token}`,
 				'Content-Type': 'application/json',
 			},
-			body: JSON.stringify(this.request_body),
-			mode: 'no-cors'
+			body: JSON.stringify(this.request_body)
 		})
 		
 		const data = await response.json() as CloudflareResponseResult<CloudflareRecord>
