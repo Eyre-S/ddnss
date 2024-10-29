@@ -56,3 +56,14 @@ API like that:
 curl 'https://api.cloudflare.com/client/v4/zones/' --header 'Authorization: Bearer YOUR_TOKEN'
 curl 'https://api.cloudflare.com/client/v4/zones/YOUR_ZONE_ID/dns_records' --header 'Authorization: Bearer YOUR_TOKEN'
 ```
+
+After all of that configurations, you can use the following
+command to start the auto-update:
+
+```sh
+npm run start
+```
+
+You can also write the above `npm run start` to your crontab,
+or any scheduler daemon to achieve the automatic updates.
+Make sure that the scripts PWD is the project dir.

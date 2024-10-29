@@ -1,6 +1,6 @@
 {
 	"scripts": {
-		"runs": "tsx --env-file=auth.env cloudflare-ddns.ts"
+		"start": "tsx --env-file=auth.env main.ts"
 	},
 	"dependencies": {
 		"jsonc": "^2.0.0",
