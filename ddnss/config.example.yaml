@@ -1,0 +1,45 @@
+accounts:
+  cf_someone: &account.cf_someone
+    type: cloudflare_api
+    api_key: daoliwhrfpioahfip3iwyhfapwhfp
+
+# This is the records that can be reused multiple times below
+# Each record defines how to get an IP address
+records:
+  
+  # type 'local' means this IP is the IP that running this service
+  my_host_server: &record.host
+    type: local
+    record: AAAA
+  
+  # type 'local_prefix' means this IP is constructed from the prefix of the local IP,
+  # plus a fixed suffix
+  my_edge_server:
+    type: local_prefix
+    record: AAAA
+    prefix_mask: 64        # Use the first 64 bits of the local IP as prefix
+    suffix: '::ff0a:2000'  # Fixed suffix to append
+  
+  my_pc:
+    type: local_prefix
+    record: AAAA
+    prefix_mask: 'ffff:ffff:ffff:ffff::'  # You can also use an IP mask format,
+                                          # for example, this is equivalent to /64
+    suffix: '::800:5efe:c0a8:1'
+
+endpoints:
+  
+  - type: cloudflare_record                       # Update a cloudflare record
+    account: *account.cf_someone # Using YAML anchor to refer account
+    check_name: main.example.com                  # You can check the record name is correct, avoid typos of record id
+    zone_id: z1234567890abcdef1234567890abcdef    # Zone ID of your domain
+    record_id: r1234567890abcdef1234567890abcdef  # Record ID you want to update
+    record: *record.host # Using YAML anchor to refer record
+  
+  - type: cloudflare_record
+    account: *account.cf_someone
+    check_name: main.internal.com                 # You can update one record for multiple domains
+    zone_id: z987654321abcdef
+    record_id: r234567890abcdef1234567890abcdef1
+    record: *record.host
+  

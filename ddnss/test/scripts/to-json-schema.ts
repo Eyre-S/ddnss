@@ -1,8 +1,8 @@
-import { zodToJsonSchema } from "zod-to-json-schema";
-import { AppConfig } from "../../src/main";
 import { mkdirSync, writeFileSync } from "fs";
+import { configFileSchema } from "../../src/config/config-types";
+import z from "zod";
 
-const appConfig_schema = zodToJsonSchema(AppConfig, "app-config")
+const appConfig_schema = z.toJSONSchema(configFileSchema);
 
 mkdirSync("schemas", { recursive: true })
 
