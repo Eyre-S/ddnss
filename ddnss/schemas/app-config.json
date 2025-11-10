@@ -2,6 +2,27 @@
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"type": "object",
 	"properties": {
+		"server_name": {
+			"default": "DD-Cluster DDNS Server",
+			"type": "string"
+		},
+		"global": {
+			"anyOf": [
+				{
+					"type": "object",
+					"properties": {
+						"update_interval": {
+							"default": "30min",
+							"type": "string"
+						}
+					},
+					"additionalProperties": false
+				},
+				{
+					"type": "null"
+				}
+			]
+		},
 		"accounts": {
 			"type": "object",
 			"propertyNames": {
@@ -107,6 +128,9 @@
 			"items": {
 				"type": "object",
 				"properties": {
+					"name": {
+						"type": "string"
+					},
 					"type": {
 						"type": "string",
 						"const": "cloudflare_record"
@@ -129,7 +153,15 @@
 						"additionalProperties": false
 					},
 					"check_name": {
-						"type": "string"
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "string",
+								"const": "as-name"
+							}
+						]
 					},
 					"zone_id": {
 						"type": "string"
@@ -210,9 +242,9 @@
 					}
 				},
 				"required": [
+					"name",
 					"type",
 					"account",
-					"check_name",
 					"zone_id",
 					"record_id",
 					"record"

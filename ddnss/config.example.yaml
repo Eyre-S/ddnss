@@ -1,3 +1,17 @@
+## DD-Cluster DDNS-Server Configuration Example File
+
+# Name of this DDNS server instance
+# Will be shown in DNS comment if supported by DNS provider
+# The default is 'DD-Cluster DDNS Server' if not specified
+server_name: DD-Cluster DDNS Server
+
+global:
+  # How often to check and update the records
+  # defaults to 30min if not specified
+  # can be 'xs', 'xmin', 'xh', 'xd' for seconds, minutes, hours, days
+  # or 'once' for one-time run
+  update_interval: 30min
+
 accounts:
   cf_someone: &account.cf_someone
     type: cloudflare_api
@@ -10,7 +24,7 @@ records:
   # type 'local' means this IP is the IP that running this service
   my_host_server: &record.host
     type: local
-    record: AAAA
+    record: AAAA  # Note that A record is not implemented among all server yet
   
   # type 'local_prefix' means this IP is constructed from the prefix of the local IP,
   # plus a fixed suffix
@@ -24,21 +38,25 @@ records:
     type: local_prefix
     record: AAAA
     prefix_mask: 'ffff:ffff:ffff:ffff::'  # You can also use an IP mask format,
-                                          # for example, this is equivalent to /64
+                                          # as an example, this is equivalent to /64
     suffix: '::800:5efe:c0a8:1'
 
 endpoints:
   
-  - type: cloudflare_record                       # Update a cloudflare record
+  - name: main.example.com
+    type: cloudflare_record                       # Update a cloudflare record
     account: *account.cf_someone # Using YAML anchor to refer account
-    check_name: main.example.com                  # You can check the record name is correct, avoid typos of record id
+    check_name: as-name                           # You can check the record name is correct, avoid typos of record id.
+                                                  # Here can be a full record name (see below),
+                                                  # or 'as-name' that means the record name should be the same as 'name' field
     zone_id: z1234567890abcdef1234567890abcdef    # Zone ID of your domain
     record_id: r1234567890abcdef1234567890abcdef  # Record ID you want to update
     record: *record.host # Using YAML anchor to refer record
   
-  - type: cloudflare_record
+  - name: main@internal                           # You can update one record to multiple domains
+    type: cloudflare_record
     account: *account.cf_someone
-    check_name: main.internal.com                 # You can update one record for multiple domains
+    check_name: main.internal.com
     zone_id: z987654321abcdef
     record_id: r234567890abcdef1234567890abcdef1
     record: *record.host

@@ -46,9 +46,10 @@ export type RecordUnit = z.infer<typeof zRecordUnit>;
 //## start endpoints
 
 export const zCloudflareRecordEndpoint = z.object({
+	name: z.string(),
 	type: z.literal("cloudflare_record"),
 	account: zAccountUnit,
-	check_name: z.string(),
+	check_name: z.union([z.string(), z.literal("as-name")]).optional(),
 	zone_id: z.string(),
 	record_id: z.string(),
 	record: zRecordUnit
@@ -61,7 +62,15 @@ export type EndpointUnit = z.infer<typeof zEndpointUnit>;
 //## end endpoints
 
 export const configFileSchema = z.object({
+	
+	server_name: z.string().default("DD-Cluster DDNS Server").optional(),
+	
+	global: z.object({
+		update_interval: z.string().default("30min").optional(),
+	}).optional().or(z.null()),
+	
 	accounts: z.record(z.string(), zAccountUnit).optional(),
 	records: z.record(z.string(), zRecordUnit).optional(),
 	endpoints: z.array(zEndpointUnit)
+	
 });
