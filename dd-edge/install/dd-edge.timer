@@ -1,0 +1,9 @@
+[Unit]
+Description=DD-Edge runs every 5 minutes
+
+[Timer]
+OnBootSec=30sec
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=multi-user.target

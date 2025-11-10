@@ -1,0 +1,7 @@
+[package]
+name = "dd-edge"
+description = "ddcluster edge component, aims to upload machine IP to ddcluster main server."
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]

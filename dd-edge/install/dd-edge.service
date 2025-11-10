@@ -1,0 +1,8 @@
+[Unit]
+Description=DD-Edge - DD-Cluster Edge Service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/dd-edge/dd-edge

@@ -95,7 +95,7 @@ export class CloudflareRecordUpdateTask {
 				throw new Error("Change record domain name is not allowed.", { cause: {
 					old_name: current.result.name,
 					new_name: this.request_body.name,
-				} })
+				}})
 			}
 		}
 		
