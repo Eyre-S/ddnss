@@ -6,8 +6,5 @@
 		"Pluvia",
 		"proxiable",
 		"proxied"
-	],
-	"yaml.schemas": {
-		"./ddnss/schemas/app-config.json": "ddnss/config*.yaml"
-	}
+	]
 }

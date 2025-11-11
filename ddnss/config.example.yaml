@@ -1,5 +1,11 @@
 ## DD-Cluster DDNS-Server Configuration Example File
 
+## schema file: ./schemas/app-config.json
+##  or: https://raw.githubusercontent.com/Eyre-S/ddnss/refs/heads/main/ddnss/schemas/app-config.json
+#$schema=https://raw.githubusercontent.com/Eyre-S/ddnss/refs/heads/main/ddnss/schemas/app-config.json
+# #yaml-language-server: $schema=https://raw.githubusercontent.com/Eyre-S/ddnss/refs/heads/main/ddnss/schemas/app-config.json
+# yaml-language-server: $schema=./schemas/app-config.json
+
 # Name of this DDNS server instance
 # Will be shown in DNS comment if supported by DNS provider
 # The default is 'DD-Cluster DDNS Server' if not specified

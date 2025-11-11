@@ -74,3 +74,4 @@ export const configFileSchema = z.object({
 	endpoints: z.array(zEndpointUnit)
 	
 });
+export type ConfigFile = z.infer<typeof configFileSchema>;
