@@ -3,6 +3,7 @@ import { ConfigFile } from "./config/config-types";
 import { checkTasks, DefinedRecords, loadConfig } from "./load-config";
 import { Logger } from "./utils/logging";
 import { getIPGetter } from "./record/ip-getters";
+import { EndpointUpdate } from "./endpoint/endpoint-updater";
 
 export class ServerMain {
 	
@@ -95,9 +96,15 @@ class Task {
 		
 		this.server.logger.info(` ==> Updating for record: ${record.name}`)
 		this.server.logger.info(`  :: getting IP address`);
-		const ipGetter = getIPGetter(record.record)
+		const ipGetter = getIPGetter(record.record, this.server)
 		const ip = await ipGetter.getIP(this.runId);
 		this.server.logger.info(`obtained IP: ${ip.correctForm()}`);
+		
+		for (const endpoint of record.associatedEndpoints) {
+			this.server.logger.info(`  :: updating endpoint: ${endpoint.name}`);
+			const updater = EndpointUpdate.get(endpoint, this.server);
+			await updater.update(this.runId, ip);
+		}
 		
 	}
 	
