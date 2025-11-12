@@ -1,7 +1,7 @@
 {
   "type": "module",
   "scripts": {
-    "start": "tsx --env-file=auth.env main.ts",
+    "start": "tsx main.ts",
     "test": "vitest run --coverage"
   },
   "dependencies": {
