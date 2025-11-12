@@ -1,4 +1,5 @@
 /node_modules
+/coverage
 
 auth.env
 config.yaml

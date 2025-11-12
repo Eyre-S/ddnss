@@ -1,7 +1,8 @@
 import { randomUniform } from "d3-random";
 import { ConfigFile } from "./config/config-types";
-import { checkTasks, loadConfig } from "./load-config";
+import { checkTasks, DefinedRecords, loadConfig } from "./load-config";
 import { Logger } from "./utils/logging";
+import { getIPGetter } from "./record/ip-getters";
 
 export class ServerMain {
 	
@@ -80,9 +81,23 @@ class Task {
 			}
 		}
 		
+		for (const record of recordWithTasks) {
+			await this.runForRecord(record);
+		}
+		
 		this.server.logger.info(` ==> Done this run.`)
 		
 		Task.forkRun(this.server);
+		
+	}
+	
+	private async runForRecord (record: DefinedRecords): Promise<void> {
+		
+		this.server.logger.info(` ==> Updating for record: ${record.name}`)
+		this.server.logger.info(`  :: getting IP address`);
+		const ipGetter = getIPGetter(record.record)
+		const ip = await ipGetter.getIP(this.runId);
+		this.server.logger.info(`obtained IP: ${ip.correctForm()}`);
 		
 	}
 	

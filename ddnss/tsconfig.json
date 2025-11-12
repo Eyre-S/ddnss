@@ -4,5 +4,9 @@
 		"target": "ESNext",
 		"moduleResolution": "bundler"
 	},
-	"include": ["src/**/*.ts", "main.ts"]
+	"include": [
+		"src/**/*.ts",
+		"main.ts",
+		"test/**/*.ts"
+	]
 }

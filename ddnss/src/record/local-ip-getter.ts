@@ -1,5 +1,6 @@
 import { Address6, Address4 } from "ip-address";
 import { Address4Or6, IPTypes } from "../helper/ip-helper";
+import { IPGetter } from "./ip-getters";
 
 
 type V4V6IPGetter = {
@@ -52,7 +53,7 @@ const LocalIPGetters: Record<string, V4V6IPGetter> = {
 	}
 };
 
-abstract class AbsLocalIPGetter <Addr extends Address4Or6> {
+abstract class AbsLocalIPGetter <Addr extends Address4Or6> implements IPGetter<Addr> {
 	
 	private cachedResult: Addr | null = null;
 	private cachedRunId: string | null = null;
