@@ -2,52 +2,88 @@ import { randomUniform } from "d3-random";
 import { ConfigFile } from "./config/config-types";
 import { checkTasks, loadConfig } from "./load-config";
 import { Logger } from "./utils/logging";
-import { sleep } from "./utils/misc";
 
-export async function main () {
+export class ServerMain {
 	
-	const config = await loadConfig();
-	const logger = new Logger(config.server_name);
-	logger.info(`--------------------------------------------------- |`);
-	logger.info(`                                                    |`);
-	logger.info(`              DD-Cluster DDNS Server                |`);
-	logger.info(`                                                    |`);
-	logger.info(`--------------------------------------------------- |`);
-	logger.info(`staring server: ${config.server_name}`);
-	logger.info(`configured run interval: ${config.global.update_interval}`);
-	logger.info(`next run will starts: Now`);
+	public readonly logger: Logger;
 	
-	const intervalMs = 5*60*1000; // 5 minutes
+	public readonly config: ConfigFile;
+	/** If equals null, this program should run once and exit. */
+	public readonly runIntervalMs: number | null;
 	
-	while (true) {
+	private constructor (config: ConfigFile) {
+		this.config = config;
+		this.logger = new Logger(config.server_name);
+		// todo: read from configuration
+		this.runIntervalMs = 1*60*1000; // 5 minutes
+	}
+	
+	public static async create (): Promise<ServerMain> {
+		const config = await loadConfig();
+		return new ServerMain(config);
+	}
+	
+	public async main (): Promise<void> {
 		
-		const runId = randomUniform(100000, 999999)().toString();
+		this.logger.info(`--------------------------------------------------- |`);
+		this.logger.info(`                                                    |`);
+		this.logger.info(`              DD-Cluster DDNS Server                |`);
+		this.logger.info(`                                                    |`);
+		this.logger.info(`--------------------------------------------------- |`);
+		this.logger.info(`staring server: ${this.config.server_name}`);
+		this.logger.info(`configured run interval: ${this.config.global.update_interval}`);
 		
-		await runTask(config, logger, runId);
-		
-		logger.info(`done current run.`)
-		logger.info(`next run will starts at: ${new Date(Date.now() + intervalMs).toLocaleString()}`);
-		
-		await sleep(intervalMs);
+		Task.forkRun(this, true);
 		
 	}
 	
 }
 
-async function runTask (config: ConfigFile, logger: Logger, runId: string) {
+class Task {
 	
-	logger.info(`---------------------------------------------------`);
-	logger.info(`===> Starting a new run`);
-	logger.info(`  run id: ${runId} `);
-	logger.info(`---------------------------------------------------`);
+	private readonly server: ServerMain;
+	private readonly runId: string;
 	
-	const recordWithTasks = await checkTasks(config);
-	logger.info(" ==> Loaded pending tasks:")
-	for (const rec of recordWithTasks) {
-		logger.info(` * ${rec.name}`)
-		for (const endpoint of rec.associatedEndpoints) {
-			logger.info(`   - ${endpoint.name}`);
+	public constructor (server: ServerMain) {
+		this.server = server;
+		this.runId = randomUniform(100000, 999999)().toString();
+	}
+	
+	public static forkRun (server: ServerMain, immediate: boolean = false): NodeJS.Timeout | null {
+		const newTask = new Task(server);
+		if (immediate) {
+			server.logger.info(`next run will starts: Now`);
+			return setTimeout(() => newTask.run(), 1);
+		} else {
+			if (server.runIntervalMs === null) {
+				server.logger.info(`done running, exiting server...`);
+				return null;
+			}
+			server.logger.info(`next run will starts at: ${new Date(Date.now() + server.runIntervalMs).toLocaleString()}`)
+			return setTimeout(() => newTask.run(), server.runIntervalMs);
 		}
+	}
+	
+	public async run (): Promise<void> {
+		
+		this.server.logger.info(`---------------------------------------------------`);
+		this.server.logger.info(`===> Starting a new run`);
+		this.server.logger.info(`  run id: ${this.runId} `);
+		this.server.logger.info(`---------------------------------------------------`);
+		
+		const recordWithTasks = await checkTasks(this.server.config);
+		this.server.logger.info(" ==> Loaded pending tasks:")
+		for (const rec of recordWithTasks) {
+			this.server.logger.info(` * ${rec.name}`)
+			for (const endpoint of rec.associatedEndpoints) {
+				this.server.logger.info(`   - ${endpoint.name}`);
+			}
+		}
+		
+		this.server.logger.info(` ==> Done this run.`)
+		
+		Task.forkRun(this.server);
+		
 	}
 	
 }

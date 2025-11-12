@@ -1,6 +1,8 @@
 {
 	"compilerOptions": {
-		"module": "NodeNext",
-		"moduleResolution": "NodeNext"
-	}
+		"module": "ESNext",
+		"target": "ESNext",
+		"moduleResolution": "bundler"
+	},
+	"include": ["src/**/*.ts", "main.ts"]
 }

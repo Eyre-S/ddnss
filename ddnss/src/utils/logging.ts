@@ -12,16 +12,17 @@ export class Logger {
 		if ( context ) this.context = context
 	}
 	
-	private getHeader (): [string, string] {
+	private getHeader (additional: string[] = []): [string, string] {
 		const header_common = `${this.context().map((x) => `[${x}]`).join('')} [${this.name}] `
-		const header_starter = `${header_common} | `
-		const header_others = `${' '.repeat(header_common.length)} | `
+		const header_tail = `${additional.map((x) => `${x}`).join(' ')} | `
+		const header_starter = `${header_common}${header_tail}`
+		const header_others = `${' '.repeat(header_common.length)}${header_tail}`
 		return [header_starter, header_others]
 	}
 	
-	public info (message: string) {
+	private send (message: string, additionalHeaders: string[] = []) {
 		
-		const [header_starter, header_others] = this.getHeader()
+		const [header_starter, header_others] = this.getHeader(additionalHeaders)
 		
 		message.split('\n').forEach((line, index) => {
 			if (index === 0) {
@@ -31,6 +32,14 @@ export class Logger {
 			}
 		})
 		
+	}
+	
+	public info (message: string) {
+		this.send(message, ['🛈'])
+	}
+	
+	public debug (message: string) {
+		this.send(message, ['⊙'])
 	}
 	
 }
