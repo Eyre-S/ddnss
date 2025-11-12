@@ -5,6 +5,7 @@
     "test": "vitest run --coverage"
   },
   "dependencies": {
+    "colorts": "^0.1.63",
     "d3-random": "^3.0.1",
     "ip-address": "^10.1.0",
     "serialize-error": "12.0.0",

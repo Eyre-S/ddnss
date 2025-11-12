@@ -1,19 +1,13 @@
 import { Address6, Address4 } from "ip-address";
 import { Address4Or6, IPTypes } from "../helper/ip-helper";
 import { IPGetter } from "./ip-getters";
+import { ServerMain } from "../new-main";
 
 
 type V4V6IPGetter = {
+	name: string;
 	v4: LocalIPGetters<Address4>;
 	v6: LocalIPGetters<Address6>;
-}
-
-function getTypedIPetter (getter: V4V6IPGetter, type: IPTypes): LocalIPGetters<Address4Or6> {
-	if (type === 'A') {
-		return getter.v4;
-	} else {
-		return getter.v6;
-	}
 }
 
 interface LocalIPGetters <T extends Address4Or6> {
@@ -46,9 +40,10 @@ class V6NetworkQueryBasedLocalIPGetter extends NetworkQueryBasedLocalIPGetter<Ad
 	}
 }
 
-const LocalIPGetters: Record<string, V4V6IPGetter> = {
+export const LocalIPGetters: Record<string, V4V6IPGetter> = {
 	FETCH_NO_IP: {
-		v4: new V4NetworkQueryBasedLocalIPGetter('http://ip1.dynupdate6.no-ip.com/'),
+		name: "no-ip.com fetch service",
+		v4: new V4NetworkQueryBasedLocalIPGetter('http://ip1.dynupdate.no-ip.com/'),
 		v6: new V6NetworkQueryBasedLocalIPGetter('http://ip1.dynupdate6.no-ip.com/'),
 	}
 };
@@ -57,6 +52,11 @@ abstract class AbsLocalIPGetter <Addr extends Address4Or6> implements IPGetter<A
 	
 	private cachedResult: Addr | null = null;
 	private cachedRunId: string | null = null;
+	
+	public constructor (
+		protected readonly server: ServerMain,
+		protected readonly endServiceProvider: V4V6IPGetter
+	) {}
 	
 	protected isCacheValid (runId: string | undefined): Addr | null {
 		if (this.cachedRunId === runId || runId === undefined) {
@@ -72,9 +72,14 @@ abstract class AbsLocalIPGetter <Addr extends Address4Or6> implements IPGetter<A
 	}
 	
 	public async getIP (runId: string): Promise<Addr> {
+		this.server.logger.info(`getting local IP address using service: ${this.endServiceProvider.name}`);
 		const cached = this.isCacheValid(runId);
-		if (cached !== null) return cached;
+		if (cached !== null) {
+			this.server.logger.info(`cache not expired, using cached address: ${cached.correctForm()}`);
+			return cached
+		};
 		const ip = await this.realGetIPAddress();
+		this.server.logger.info(`obtained local IP address: ${ip.correctForm()}`);
 		return this.cacheIP(ip, runId);
 	}
 	
@@ -84,14 +89,12 @@ abstract class AbsLocalIPGetter <Addr extends Address4Or6> implements IPGetter<A
 
 export class LocalIPGetterV4 extends AbsLocalIPGetter<Address4> {
 	protected override async realGetIPAddress(): Promise<Address4> {
-		const getter = getTypedIPetter(LocalIPGetters.FETCH_NO_IP, 'A') as LocalIPGetters<Address4>;
-		return getter.getIP();
+		return this.endServiceProvider.v4.getIP();
 	}
 }
 
 export class LocalIPGetterV6 extends AbsLocalIPGetter<Address6> {
 	protected override async realGetIPAddress(): Promise<Address6> {
-		const getter = getTypedIPetter(LocalIPGetters.FETCH_NO_IP, 'AAAA') as LocalIPGetters<Address6>;
-		return getter.getIP();
+		return this.endServiceProvider.v6.getIP();
 	}
 }

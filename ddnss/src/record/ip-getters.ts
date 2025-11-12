@@ -2,7 +2,7 @@ import { Address6 } from "ip-address";
 import { Address4Or6 } from "../helper/ip-helper";
 import { RecordUnit } from "../config/config-types";
 import { LocalPrefixIPGetterV6 } from "./local-prefix-ip-getter";
-import { LocalIPGetterV6 } from "./local-ip-getter";
+import { LocalIPGetters, LocalIPGetterV6 } from "./local-ip-getter";
 import { ServerMain } from "../new-main";
 
 export interface IPGetter <T extends Address4Or6> {
@@ -13,9 +13,15 @@ export interface IPGetter <T extends Address4Or6> {
 
 export interface IPV6Getter extends IPGetter<Address6> {}
 
-const defaultLocalIPGetterV6 = new LocalIPGetterV6()
-export function getDefaultLocalIPGetterV6 (): IPGetter<Address6> {
-	return defaultLocalIPGetterV6;
+let cachedDefaultGetter: IPGetter<Address6> | null = null;
+export function getDefaultLocalIPGetterV6 (server: ServerMain): IPGetter<Address6> {
+	if (cachedDefaultGetter === null) {
+		cachedDefaultGetter = new LocalIPGetterV6(
+			server,
+			LocalIPGetters.FETCH_NO_IP
+		);
+	}
+	return cachedDefaultGetter;
 }
 
 export function getIPGetter (configRecord: RecordUnit, server: ServerMain): IPV6Getter {
@@ -29,13 +35,14 @@ export function getIPGetter (configRecord: RecordUnit, server: ServerMain): IPV6
 					prefixMask = new Address6(configRecord.prefix_mask);
 				}
 				return new LocalPrefixIPGetterV6(
-					getDefaultLocalIPGetterV6(),
+					server,
+					getDefaultLocalIPGetterV6(server),
 					prefixMask,
 					new Address6(configRecord.suffix),
 				);
 			}
 			case 'local': {
-				return getDefaultLocalIPGetterV6();
+				return getDefaultLocalIPGetterV6(server);
 			}
 		}
 	} else {

@@ -15,6 +15,7 @@ export const EndpointUpdate = {
 			throw new Error('IPv4 A record endpoint updater not implemented yet');
 		}
 		return new CloudflareAAAAEndpointUpdater(
+			server,
 			config.account,
 			config.zone_id,
 			config.record_id,

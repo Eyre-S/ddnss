@@ -38,14 +38,22 @@ export class Logger {
 		this.send(message, ['🛈'])
 	}
 	
+	public warn (message: string) {
+		this.send(message, ['⚠'.yellow])
+	}
+	
 	public debug (message: string) {
-		this.send(message, ['⊙'])
+		this.send(message, ['⊙'.gray])
+	}
+	
+	public error (message: string) {
+		this.send(message, ['✖'.red])
 	}
 	
 }
 
 export function strip (str: string): string {
-	return str.replaceAll(/(?<=\n)[\t| ]*\|/g, '')
+	return str.replace(/^\n[\t ]*\|/, '').replace(/\n[\t ]*$/, '').replaceAll(/(?<=\n)[\t ]*\|/g, '')
 }
 
 export function indent (str: string, indent: number = 2): string {
