@@ -1,7 +1,7 @@
 import { Address6 } from "ip-address";
 import { EndpointUnit } from "../config/config-types";
 import { Address4Or6 } from "../helper/ip-helper";
-import { ServerMain } from "../new-main";
+import { ServerMain } from "../main";
 import { CloudflareAAAAEndpointUpdater } from "./cloudflare";
 
 export interface EndpointUpdater<Addr extends Address4Or6> {

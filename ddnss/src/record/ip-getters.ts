@@ -3,7 +3,7 @@ import { Address4Or6 } from "../helper/ip-helper";
 import { RecordUnit } from "../config/config-types";
 import { LocalPrefixIPGetterV6 } from "./local-prefix-ip-getter";
 import { LocalIPGetters, LocalIPGetterV6 } from "./local-ip-getter";
-import { ServerMain } from "../new-main";
+import { ServerMain } from "../main";
 
 export interface IPGetter <T extends Address4Or6> {
 	

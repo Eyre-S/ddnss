@@ -2,7 +2,7 @@ import { Address6 } from "ip-address";
 import { EndpointUpdater } from "./endpoint-updater";
 import { CloudflareAPIAccount } from "../config/config-types";
 import { cloudflareIsSuccess, CloudflareRecordUpdateTask, SetRecordCloudflareConfig } from "../services/cloudflare";
-import { ServerMain } from "../new-main";
+import { ServerMain } from "../main";
 import { define } from "../utils/defines";
 import { strip } from "../utils/logging";
 

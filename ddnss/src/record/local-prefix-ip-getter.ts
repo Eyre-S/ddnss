@@ -1,7 +1,7 @@
 import { Address6 } from "ip-address";
 import { applyIPv6Mask, IPv6CIDR2Mask, mergeIPv6, reverseIPv6 } from "../helper/ip-helper";
 import { IPV6Getter } from "./ip-getters";
-import { ServerMain } from "../new-main";
+import { ServerMain } from "../main";
 
 export class LocalPrefixIPGetterV6 <T extends IPV6Getter> implements IPV6Getter {
 	

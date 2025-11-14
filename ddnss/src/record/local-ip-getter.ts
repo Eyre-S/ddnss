@@ -1,7 +1,7 @@
 import { Address6, Address4 } from "ip-address";
-import { Address4Or6, IPTypes } from "../helper/ip-helper";
+import { Address4Or6 } from "../helper/ip-helper";
 import { IPGetter } from "./ip-getters";
-import { ServerMain } from "../new-main";
+import { ServerMain } from "../main";
 
 
 type V4V6IPGetter = {

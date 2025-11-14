@@ -1,3 +1,3 @@
-import { ServerMain } from "./src/new-main";
+import { ServerMain } from "./src/main";
 
 (await ServerMain.create()).main();
