@@ -5,11 +5,14 @@ import { Logger } from "./utils/logging";
 import { getIPGetter } from "./record/ip-getters";
 import { EndpointUpdate } from "./endpoint/endpoint-updater";
 import { parseDuration } from "./helper/times";
+import { Console } from "./console/console";
+
 import 'colorts/lib/string';
 
 export class ServerMain {
 	
 	public readonly logger: Logger;
+	public readonly console: Console;
 	
 	public readonly config: ConfigFile;
 	/** If equals null, this program should run once and exit. */
@@ -18,6 +21,7 @@ export class ServerMain {
 	private constructor (config: ConfigFile) {
 		this.config = config;
 		this.logger = new Logger(config.server_name);
+		this.console = new Console(this, this.logger);
 		this.runIntervalMs = parseDuration(config.global.update_interval);
 	}
 	
