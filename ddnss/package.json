@@ -3,11 +3,13 @@
   "scripts": {
     "start": "tsx main.ts",
     "test": "vitest run --coverage",
-    "compile": "tsc --noEmit"
+    "compile": "tsc --noEmit",
+    "testCase": "tsx test/scripts/console-test.ts"
   },
   "dependencies": {
     "colorts": "^0.1.63",
     "d3-random": "^3.0.1",
+    "eastasianwidth": "^0.3.0",
     "ip-address": "^10.1.0",
     "serialize-error": "12.0.0",
     "tsx": "^4.20.6",

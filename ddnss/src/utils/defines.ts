@@ -16,3 +16,5 @@ export function fillDefaults <T> ( params: T, defaults: Required<PickOptional<T>
 		...params,
 	} as Required<T>
 }
+
+export const withDefaults = fillDefaults

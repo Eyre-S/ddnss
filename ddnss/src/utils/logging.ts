@@ -1,54 +1,125 @@
 import { serializeError } from "serialize-error"
+import Stream from "stream"
+import { withDefaults } from "./defines"
+import { ensureWithin } from "./ensure"
+import eaw from "eastasianwidth"
 
 // TODO:
-//  - [ ] Support log to stderr when needed.
 //  - [ ] Support log level switches.
-//  - [ ] Support switch prompt and readline on and off.
-//  - [ ] Show headers colored.
-//  - [ ] Show message colored.
 export class Logger {
 	
 	public readonly name: string
 	private readlineCallback: ((line: string) => void) | null = null
-	private prompt: (() => string) = () => '> '
-	public readonly context: () => string[] = () => {
-		return [new Date().toISOString()]
+	public readonly context: Logger.ContextCb = Logger.defaultContext
+	private prompt: Logger.PromptCb = Logger.defaultPrompt
+	
+	private _isConsoleOpen = false
+	public get isConsoleOpen (): boolean { return this._isConsoleOpen }
+	public set isConsoleOpen (value: boolean) {
+		this._isConsoleOpen = value
+		this.rerenderPrompt()
 	}
 	
-	constructor (name: string, context?: () => string[]) {
+	constructor (name: string, context?: Logger.ContextCb) {
 		this.name = name
 		if (context) this.context = context
 		process.stdin.setRawMode(true)
 		process.stdin.on('data', this.onChar.bind(this))
-		process.stdout.write(this.prompt());
+		process.stdout.write(this.prompt(this));
 	}
 	
 	private inputBuffer: string = ''
+	private inputPosition: number = 0
+	private inputBeforeCursor (): string { return this.inputBuffer.slice(0, this.inputPosition); }
+	private inputAfterCursor (): string { return this.inputBuffer.slice(this.inputPosition); }
+	public consoleStatus = {
+		buffer: () => this.inputBuffer,
+		position: () => this.inputPosition,
+		beforeCursor: () => this.inputBeforeCursor(),
+		afterCursor: () => this.inputAfterCursor(),
+		isOpen: () => this.isConsoleOpen
+	}
 	private onChar (buffer: Buffer<ArrayBuffer>): void {
+		
 		const char = buffer.toString("utf8")
+		
+		// Handle Ctrl+C
+		if (char === '\u0003') {
+			this.warn('exiting due to Ctrl+C')
+			process.exit()
+		}
+		
+		// Block input when console is closed
+		if (!this.isConsoleOpen) return
+		
+		// Handle Enter
 		if (char === '\r' || char === '\n') {
 			process.stdout.write('\n')
 			this.readlineCallback?.(this.inputBuffer)
 			this.inputBuffer = ''
-			process.stdout.clearLine(0)
-			process.stdout.cursorTo(0)
-			process.stdout.write(this.prompt());
+			this.inputPosition = 0
+			this.rerenderPrompt()
 			return
-		} else if (char === '\u0003') {
-			this.warn('exiting due to Ctrl+C')
-			process.exit()
-		} else if (char === '\u0008' || char === '\u007F') {
+		}
+		
+		// Handle backspace
+		if (char === '\u0008') {
 			// backspace
-			if (this.inputBuffer.length > 0) {
-				this.inputBuffer = this.inputBuffer.slice(0, -1)
-				process.stdout.clearLine(0)
-				process.stdout.cursorTo(0)
-				process.stdout.write(this.prompt() + this.inputBuffer)
+			if (this.inputBuffer.strip.length > 0) {
+				let before = this.inputBeforeCursor().slice(0, -1)
+				let after = this.inputAfterCursor()
+				this.inputBuffer = before + after
+				this.inputPosition = ensureWithin(0, this.inputPosition - 1, this.inputBuffer.length)
+				this.rerenderPrompt()
 			}
 			return
 		}
-		this.inputBuffer += char
-		process.stdout.write(char)
+		
+		// Handle Position Cursor Left/Right
+		if (char === '\u001b[D' || char === '\u001b[C') {
+			this.inputPosition = ensureWithin(0, this.inputPosition + (char === '\u001b[D' ? -1 : 1), this.inputBuffer.length)
+			this.rerenderPrompt()
+			return
+		}
+		// // Handle Position Cursor Up/Down
+		// if (char === '\u001b[A' || char === '\u001b[B') {
+		// 	return
+		// }
+		// Handle Home/End
+		if (char === '\u001b[1~') {
+			this.inputPosition = 0
+			this.rerenderPrompt()
+			return
+		}
+		if (char === '\u001b[4~') {
+			this.inputPosition = this.inputBuffer.length
+			this.rerenderPrompt()
+			return
+		}
+		// Ignore all unknown control characters
+		if (char <= '\u001f' || char === '\u007f') {
+			this.debug(`Ignored control character: ${char.split('').map(c =>'\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')).join(', ')}`)
+			return
+		}
+		
+		// Handle any other characters
+		this.inputBuffer = this.inputBeforeCursor() + char + this.inputAfterCursor()
+		this.inputPosition += char.length
+		this.rerenderPrompt()
+		
+	}
+	
+	private clearPromptLine (): void {
+		process.stdout.clearLine(0)
+		process.stdout.cursorTo(0)
+	}
+	
+	private rerenderPrompt (): void {
+		process.stdout.clearLine(0)
+		process.stdout.cursorTo(0)
+		const prompt = this.prompt(this);
+		process.stdout.write(prompt + this.inputBuffer);
+		process.stdout.cursorTo(eaw.length(prompt.strip) + eaw.length(this.inputBeforeCursor()));
 	}
 	
 	public setOnReadline (callback: (line: string) => void): Logger {
@@ -59,62 +130,107 @@ export class Logger {
 		return this
 	}
 	
-	public setPrompt (callback: () => string): Logger {
+	public setPrompt (callback: Logger.PromptCb): Logger.PromptCb {
+		const old = this.prompt
 		this.prompt = callback
-		return this
+		return old
 	}
 	
-	private getHeader (additional: string[] = []): [string, string] {
-		const header_common = `${this.context().map((x) => `[${x}]`).join('')} [${this.name}] `
-		const header_tail = `${additional.map((x) => `${x}`).join(' ')} | `
+	private getHeader (persist: string[], additional: { preHeader: string[], postHeader: string[], prefixModifier: (prefix: string) => string }): [string, string] {
+		const header_common = `${[...additional.preHeader, ...this.context(this), ...additional.postHeader].map((x) => `[${x}]`).join('')}`
+		const header_tail = `${persist.map((x) => `${x}`).join(' ')}` + additional.prefixModifier(" | ".bold as any as string)
 		const header_starter = `${header_common}${header_tail}`
-		const header_others = `${' '.repeat(header_common.length)}${header_tail}`
+		const header_others = `${' '.repeat(header_common.strip.length)}${header_tail}`
 		return [header_starter, header_others]
 	}
 	
-	private send (message: string, additionalHeaders: string[] = []) {
+	private render (message: string, persistHeader: string[], _additional: Logger.RenderParameters = {}) {
 		
-		const [header_starter, header_others] = this.getHeader(additionalHeaders)
+		const additional = withDefaults(_additional, {
+			preHeader: [],
+			postHeader: [],
+			messageModifier: (msg: string) => msg,
+			lineModifier: (line: string) => line,
+			prefixModifier: (prefix: string) => prefix,
+			pipe: process.stdout
+		})
 		
-		process.stdout.clearLine(0)
-		process.stdout.cursorTo(0)
+		const [header_starter, header_others] = this.getHeader(persistHeader, additional)
+		
+		const pipe = additional.pipe;
+		
+		if (pipe === process.stdout || pipe === process.stderr) {
+			this.clearPromptLine();
+		}
+		message = additional.messageModifier(message)
 		message.split('\n').forEach((line, index) => {
+			line = additional.lineModifier(line)
 			if (index === 0) {
-				process.stdout.write(header_starter + line + '\n')
+				pipe.write(header_starter + line + '\n')
 			} else {
-				process.stdout.write(header_others + line + '\n')
+				pipe.write(header_others + line + '\n')
 			}
 		})
-		process.stdout.write(this.prompt() + this.inputBuffer);
+		if (pipe === process.stdout || pipe === process.stderr) {
+			this.rerenderPrompt();
+		}
 		
 	}
 	
 	public echo (message: string) {
-		this.send(message, ['➤'])
+		this.render(message, ['➤'], { pipe: process.stdout })
 	}
 	
 	public echoWarn (message: string) {
-		this.send(message, ['➤'.yellow])
+		this.render(message, ['➤'.yellow], { pipe: process.stdout })
 	}
 	
 	public echoError (message: string) {
-		this.send(message, ['➤'.red])
+		this.render(message, ['➤'.red], { pipe: process.stdout, lineModifier: (msg) => msg.red, prefixModifier: (prefix) => prefix.red } )
 	}
 	
 	public info (message: string) {
-		this.send(message, ['🛈'])
+		this.render(message, ['🛈'])
 	}
 	
 	public warn (message: string) {
-		this.send(message, ['⚠'.yellow])
+		this.render(message, ['⚠'.yellow])
 	}
 	
 	public debug (message: string) {
-		this.send(message, ['⊙'.gray])
+		this.render(message, ['⊙'.gray], { lineModifier: (msg) => msg.gray, prefixModifier: (prefix) => prefix.strip.gray } )
 	}
 	
 	public error (message: string) {
-		this.send(message, ['✖'.red])
+		this.render(message, ['✖'.red], { pipe: process.stderr, lineModifier: (msg) => msg.red, prefixModifier: (prefix) => prefix.red } )
+	}
+	
+}
+
+export namespace Logger {
+	
+	export interface RenderParameters {
+		preHeader?: string[],
+		postHeader?: string[],
+		messageModifier?: (message: string) => string
+		lineModifier?: (line: string) => string,
+		prefixModifier?: (prefix: string) => string,
+		pipe?: Stream.Writable
+	}
+	
+	export type PromptCb = (self: Logger) => string
+	export type ContextCb = (self: Logger) => string[]
+	
+	export const defaultPrompt: PromptCb = (self) => {
+		if (self.isConsoleOpen) {
+			return '> '.green.bold as any as string
+		} else {
+			return 'X> '.green.bold as any as string
+		}
+	}
+	
+	export const defaultContext: ContextCb = (self) => {
+		return [new Date().toISOString().blue, self.name.magenta]
 	}
 	
 }

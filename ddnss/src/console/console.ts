@@ -7,9 +7,12 @@ export class Console {
 	
 	public constructor (
 		private server: ServerMain,
-		private logger: Logger
+		private logger: Logger,
+		initialOpenLogger: boolean = true
 	) {
 		logger.setOnReadline(this.onCommand.bind(this));
+		if (initialOpenLogger)
+			logger.isConsoleOpen = true;
 	}
 	
 	private onCommand (input: string): void {

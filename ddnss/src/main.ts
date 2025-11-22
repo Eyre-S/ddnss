@@ -6,9 +6,9 @@ import { getIPGetter } from "./record/ip-getters";
 import { EndpointUpdate } from "./endpoint/endpoint-updater";
 import { parseDuration } from "./helper/times";
 import { Console } from "./console/console";
+import { InterruptedError, Thread } from "./utils/thread";
 
 import 'colorts/lib/string';
-import { InterruptedError, Thread } from "./utils/thread";
 
 export class ServerMain {
 	
@@ -24,7 +24,7 @@ export class ServerMain {
 	private constructor (config: ConfigFile) {
 		this.config = config;
 		this.logger = new Logger(config.server_name);
-		this.console = new Console(this, this.logger);
+		this.console = new Console(this, this.logger, false);
 		this.runIntervalMs = parseDuration(config.global.update_interval);
 		this.taskThread = new TaskThread(this);
 	}
@@ -43,6 +43,11 @@ export class ServerMain {
 		this.logger.info(`--------------------------------------------------- |`.magenta);
 		this.logger.info(`staring server: ${this.config.server_name}`);
 		this.logger.info(`configured run interval: ${this.config.global.update_interval} (${this.runIntervalMs} ms)`);
+		this.logger.debug(`Debug run enabled! This may log sensitive information or affect performance.`);
+		this.logger.debug(`Loaded configuration:\n${JSON.stringify(this.config, null, '\t')}`);
+		
+		this.logger.info(`Initialized server!`)
+		this.logger.isConsoleOpen = true;
 		
 		this.taskThread.start();
 		
@@ -56,7 +61,6 @@ export class ServerMain {
 }
 
 // TODO:
-//  - Pause console while running tasks
 //  - Watchdog
 //  - Graceful shutdown
 class TaskThread extends Thread {
@@ -69,11 +73,15 @@ class TaskThread extends Thread {
 		this.server.logger.info("Starting initial task run...")
 		while (true) {
 			const task = new Task(this.server);
+			this.server.logger.isConsoleOpen = false;
+			const oldPrompt = this.server.logger.setPrompt((self) => `run-${task.runId}` + ` X `.blue.bold)
 			try {
 				await task.run();
 			} catch (err) {
 				this.server.logger.error(`An error occurred during task run:\n${normalError(err)}`);
 			}
+			this.server.logger.setPrompt(oldPrompt);
+			this.server.logger.isConsoleOpen = true;
 			if (this.server.runIntervalMs === null) {
 				this.server.logger.info("Single run mode detected, exiting...");
 				break;
@@ -142,7 +150,7 @@ class TaskThread extends Thread {
 class Task {
 	
 	private readonly server: ServerMain;
-	private readonly runId: string;
+	public readonly runId: string;
 	
 	public constructor (server: ServerMain) {
 		this.server = server;
