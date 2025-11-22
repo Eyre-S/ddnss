@@ -1,0 +1,10 @@
+Available commands:
+    
+    stop      Stop the server and interrupt all the running tasks
+    exit      
+    quit      
+    
+    run       Run a new task immediately
+    
+    help      Show this help
+    

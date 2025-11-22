@@ -19,6 +19,10 @@ export class CloudflareAAAAEndpointUpdater implements EndpointUpdater<Address6> 
 	
 	async update (runId: string, address: Address6): Promise<void> {
 		
+		// await sleep(500);
+		// this.server.logger.info(`Dummy updated!`)
+		// return;
+		
 		const config = define<SetRecordCloudflareConfig>({
 			zone_id: this.zoneId,
 			record_id: this.recordId,

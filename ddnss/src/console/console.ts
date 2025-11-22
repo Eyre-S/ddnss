@@ -1,5 +1,7 @@
+import { readFileSync } from "fs";
 import { ServerMain } from "../main";
 import { Logger } from "../utils/logging";
+import path from "path";
 
 export class Console {
 	
@@ -17,11 +19,17 @@ export class Console {
 		
 		switch (command) {
 			case 'help':
-				this.logger.echo('Available commands: help, exit');
+				this.logger.echo(readFileSync(path.join('./', 'resources', 'console', 'help.txt'), 'utf-8'));
 				break;
 			case 'exit':
-				this.logger.echo('Exiting server...');
+			case 'quit':
+			case 'stop':
+				this.logger.echo('Stopping DDNSS server...');
 				process.exit(0);
+			case 'run':
+				this.logger.echo('Calling task thread to run immediately...');
+				this.server.callTaskImmediately();
+				break;
 			default:
 				this.logger.echoWarn(`Unknown command: ${command}`);
 		}
