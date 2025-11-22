@@ -5,10 +5,14 @@ interface SleepTimeout {
 	resolve: () => void;
 }
 
+// TODO: Post-check to make sure there are no race conditions.
 export abstract class Thread {
 	
 	private sleepingTimeout: SleepTimeout | null = null;
-	private state: 'preparing' | 'running' | 'stopped' = 'preparing';
+	// TODO: show sleep state
+	private _state: 'preparing' | 'running' | 'stopped' = 'preparing';
+	public get state (): 'preparing' | 'running' | 'stopped' { return this._state; }
+	private set state (value: 'preparing' | 'running' | 'stopped') { this._state = value; }
 	private interruptedState: null | InterruptingParameter<any> = null;
 	public errorCatcher: ((err: any) => void) = (err: any) => {
 		console.error("Uncaught error in thread:", normalError(err));
@@ -16,6 +20,7 @@ export abstract class Thread {
 	
 	public start (): void {
 		if (this.state !== 'preparing') {
+			// TODO: IllegalThreadStateError.NotStartableThreadError
 			throw new Error("This thread has already been started.");
 		}
 		this.state = 'running';
@@ -55,9 +60,10 @@ export abstract class Thread {
 		const promise = Promise.withResolvers<void>()
 		const int = this.interrupted()
 		if (int !== null) {
-			throw new InterruptedError("Thread was interrupted.", int);
+			throw new InterruptedError("Thread was interrupted during sleep!", int);
 		}
 		if (this.sleepingTimeout !== null) {
+			// TODO: IllegalThreadStateError.AlreadySleepingError
 			throw new Error("This thread is already sleeping.");
 		}
 		this.sleepingTimeout = {
@@ -77,12 +83,14 @@ export abstract class Thread {
 			this.sleepingTimeout = null;
 			temp.resolve();
 		} else {
+			// TODO: IllegalThreadStateError.NotSleepingError
 			throw new Error("This thread is not sleeping.");
 		}
 	}
 	
 	public interrupt <T> (param?: T): void {
 		if (this.state !== 'running') {
+			// TODO: IllegalThreadStateError.NotRunningError
 			throw new Error("This thread is not running.");
 		}
 		this.interruptedState = new InterruptingParameter<T>(param);

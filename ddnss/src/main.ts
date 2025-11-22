@@ -55,6 +55,10 @@ export class ServerMain {
 	
 }
 
+// TODO:
+//  - Pause console while running tasks
+//  - Watchdog
+//  - Graceful shutdown
 class TaskThread extends Thread {
 	
 	public constructor (
@@ -89,9 +93,9 @@ class TaskThread extends Thread {
 }
 
 // class TaskThreadManager {
-	
+//	
 // 	private activeThread: NodeJS.Timeout | null = null;
-	
+//	
 // 	private _intervalMs: number;
 // 	public get intervalMs (): number {
 // 		return this._intervalMs;
@@ -99,18 +103,18 @@ class TaskThread extends Thread {
 // 	public set intervalMs (value: number) {
 // 		this._intervalMs = value;
 // 	}
-	
+//	
 // 	public constructor (
 // 		private readonly server: ServerMain,
 // 		intervalMs: number
 // 	) {
 // 		this._intervalMs = intervalMs;
 // 	}
-	
+//	
 // 	public async start (immediate: boolean): Promise<void> {
 // 		this.scheduleRuns(this.server, immediate);
 // 	}
-	
+//	
 // 	private scheduleRuns (server: ServerMain, immediate: boolean = false): void {
 // 		if (immediate) {
 // 			server.logger.info(`next run will starts: Now`);
@@ -120,7 +124,7 @@ class TaskThread extends Thread {
 // 			this.activeThread = setTimeout(this.forkRun.bind(this), server.runIntervalMs);
 // 		}
 // 	}
-	
+//	
 // 	private forkRun (): Promise<void> {
 // 		return new Promise((resolve) => {
 // 			new Task(this.server).run().then(() => {
@@ -129,9 +133,12 @@ class TaskThread extends Thread {
 // 			}).catch((err) => { throw err });
 // 		})
 // 	}
-	
+//	
 // }
 
+// TODO: Catch unexpected error for
+//  - each record update
+//  - each endpoint update
 class Task {
 	
 	private readonly server: ServerMain;

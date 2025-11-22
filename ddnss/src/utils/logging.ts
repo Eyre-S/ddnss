@@ -1,5 +1,11 @@
 import { serializeError } from "serialize-error"
 
+// TODO:
+//  - [ ] Support log to stderr when needed.
+//  - [ ] Support log level switches.
+//  - [ ] Support switch prompt and readline on and off.
+//  - [ ] Show headers colored.
+//  - [ ] Show message colored.
 export class Logger {
 	
 	public readonly name: string
