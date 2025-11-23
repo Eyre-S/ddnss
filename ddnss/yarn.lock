@@ -303,11 +303,6 @@
     "@types/deep-eql" "*"
     assertion-error "^2.0.1"
 
-"@types/d3-random@^3.0.3":
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/@types/d3-random/-/d3-random-3.0.3.tgz#ed995c71ecb15e0cd31e22d9d5d23942e3300cfb"
-  integrity sha512-Imagg1vJ3y76Y2ea0871wpabqp613+8/r0mCLEBfdtqC7xMSfj9idOnmBYyMoULfHePJyxMAw3nWhJxzc+LFwQ==
-
 "@types/deep-eql@*":
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/@types/deep-eql/-/deep-eql-4.0.2.tgz#334311971d3a07121e7eb91b684a605e7eea9cbd"
@@ -325,7 +320,7 @@
   dependencies:
     undici-types "~7.16.0"
 
-"@vitest/coverage-v8@^4.0.12":
+"@vitest/coverage-v8@^4.0.13":
   version "4.0.13"
   resolved "https://registry.yarnpkg.com/@vitest/coverage-v8/-/coverage-v8-4.0.13.tgz#de5d925993002642551ab47327d6f1b2daf9d2d8"
   integrity sha512-w77N6bmtJ3CFnL/YHiYotwW/JI3oDlR3K38WEIqegRfdMSScaYxwYKB/0jSNpOTZzUjQkG8HHEz4sdWQMWpQ5g==
@@ -423,11 +418,6 @@ colorts@^0.1.63:
   version "0.1.63"
   resolved "https://registry.yarnpkg.com/colorts/-/colorts-0.1.63.tgz#d27f06814b1793a5e974bd472422064ed74684a7"
   integrity sha512-prWZKocUjLYvt9Jx4j+KEkeQSm9rvGA2ZB90Je6odMyXPthpb1pTW9/0RxUZ/CRXc+DsydMLOQIrDBgdx5jjOg==
-
-d3-random@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/d3-random/-/d3-random-3.0.1.tgz#d4926378d333d9c0bfd1e6fa0194d30aebaa20f4"
-  integrity sha512-FXMe9GfxTxqd5D6jFsQ+DJ8BJS4E/fT5mqqdjovykEB2oFbTMDVdg1MGFxfQW+FBOGoB++k8swBrgwSHT1cUXQ==
 
 debug@^4.1.1, debug@^4.4.3:
   version "4.4.3"
@@ -615,6 +605,11 @@ postcss@^8.5.6:
     picocolors "^1.1.1"
     source-map-js "^1.2.1"
 
+random@^5.4.1:
+  version "5.4.1"
+  resolved "https://registry.yarnpkg.com/random/-/random-5.4.1.tgz#4a36248cec341ea3eeb7410a0f81f3839bc5becb"
+  integrity sha512-HtccRkYkAXCbj9bqsyGKGlicyeZ5AsQgs49fEuUO/BvrJ7WOQqXPjdg1CZrFjBkoT75ozrWlQXJ7TcXXLv2ISQ==
+
 resolve-pkg-maps@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz"
@@ -752,7 +747,7 @@ undici-types@~7.16.0:
   optionalDependencies:
     fsevents "~2.3.3"
 
-vitest@^4.0.12:
+vitest@^4.0.13:
   version "4.0.13"
   resolved "https://registry.yarnpkg.com/vitest/-/vitest-4.0.13.tgz#42bf1dcc079736e63ba96235eccf20552feaaebd"
   integrity sha512-QSD4I0fN6uZQfftryIXuqvqgBxTvJ3ZNkF6RWECd82YGAYAfhcppBLFXzXJHQAAhVFyYEuFTrq6h0hQqjB7jIQ==

@@ -3,6 +3,7 @@ import Stream from "stream"
 import { withDefaults } from "./defines"
 import { ensureWithin } from "./ensure"
 import eaw from "eastasianwidth"
+import { Thread } from "./thread"
 
 // TODO:
 //  - [ ] Support log level switches.
@@ -230,7 +231,7 @@ export namespace Logger {
 	}
 	
 	export const defaultContext: ContextCb = (self) => {
-		return [new Date().toISOString().blue, self.name.magenta]
+		return [new Date().toISOString().blue, (Thread.getCurrentThread()?.name || "global").cyan, self.name.magenta]
 	}
 	
 }
@@ -244,9 +245,30 @@ export function indent (str: string, indent: number = 2): string {
 }
 
 export function normalError (error: any): string {
+	
+	if (error instanceof Error) {
+		let errMessage = ""
+		errMessage = error.stack || `${error.name}: ${error.message}`
+		const { stack: _1, name: _2, message: _3, cause: _4, ...extra } = error as any
+		if (Object.keys(extra).length > 0) {
+			errMessage += `\n  Extra properties:`
+			for (const [key, value] of Object.entries(extra)) {
+				errMessage += `\n    - ${key}: ${JSON.stringify(value)}`
+			}
+		}
+		let cause = error.cause
+		while (cause) {
+			errMessage += `\nCaused by: ${normalError(cause)}`
+			if (cause instanceof Error) cause = cause.cause
+			else cause = undefined
+		}
+		return errMessage
+	}
+	
 	if (typeof error === 'object') {
 		return JSON.stringify(serializeError(error), undefined, 4)
 	} else {
 		return new String(error).toString()
 	}
+	
 }

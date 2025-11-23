@@ -1,4 +1,6 @@
+import random from 'random'
 import { normalError } from "./logging";
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 interface SleepTimeout {
 	timeout: NodeJS.Timeout;
@@ -8,15 +10,34 @@ interface SleepTimeout {
 // TODO: Post-check to make sure there are no race conditions.
 export abstract class Thread {
 	
+	private static storage = new AsyncLocalStorage<Thread>();
+	
+	public static getCurrentThread(): Thread | undefined {
+		return Thread.storage.getStore();
+	}
+	
 	private sleepingTimeout: SleepTimeout | null = null;
+	
 	// TODO: show sleep state
 	private _state: 'preparing' | 'running' | 'stopped' = 'preparing';
 	public get state (): 'preparing' | 'running' | 'stopped' { return this._state; }
 	private set state (value: 'preparing' | 'running' | 'stopped') { this._state = value; }
-	private interruptedState: null | InterruptingParameter<any> = null;
+	
 	public errorCatcher: ((err: any) => void) = (err: any) => {
 		console.error("Uncaught error in thread:", normalError(err));
 	};
+	
+	private _name: string;
+	public get name (): string { return this._name; }
+	public set name (value: string) {
+		this._name = value;
+	}
+	
+	public constructor (
+		name?: string
+	) {
+		this.name = name ?? "Thread-" + random.int(0, Number.MAX_SAFE_INTEGER);
+	}
 	
 	public start (): void {
 		if (this.state !== 'preparing') {
@@ -24,13 +45,17 @@ export abstract class Thread {
 			throw new Error("This thread has already been started.");
 		}
 		this.state = 'running';
-		this.run().then(() => {
+		Thread.storage.run<Promise<void>>(this, () => {
+			return this.run()
+		}).then(() => {
 			this.state = 'stopped';
 		}).catch((err) => {
 			this.state = 'stopped';
 			this.errorCatcher(err);
 		});
 	}
+	
+	private interruptedState: null | InterruptingParameter<any> = null;
 	
 	protected async sleep (ms: number): Promise<void> {
 		await this.executeSleep(ms);

@@ -1,4 +1,3 @@
-import { randomUniform } from "d3-random";
 import { ConfigFile } from "./config/config-types";
 import { checkTasks, DefinedRecords, loadConfig } from "./load-config";
 import { Logger, normalError } from "./utils/logging";
@@ -7,6 +6,7 @@ import { EndpointUpdate } from "./endpoint/endpoint-updater";
 import { parseDuration } from "./helper/times";
 import { Console } from "./console/console";
 import { InterruptedError, Thread } from "./utils/thread";
+import { Random } from "random";
 
 import 'colorts/lib/string';
 
@@ -65,14 +65,19 @@ export class ServerMain {
 //  - Graceful shutdown
 class TaskThread extends Thread {
 	
+	private taskIdRandomizer = new Random();
+	
 	public constructor (
 		private readonly server: ServerMain
 	) { super() }
 	
 	public override async run (): Promise<void> {
+		
+		this.name = "TaskRunner"
+		
 		this.server.logger.info("Starting initial task run...")
 		while (true) {
-			const task = new Task(this.server);
+			const task = new Task(this.server, this.taskIdRandomizer);
 			this.server.logger.isConsoleOpen = false;
 			const oldPrompt = this.server.logger.setPrompt((self) => `run-${task.runId}` + ` X `.blue.bold)
 			try {
@@ -96,6 +101,7 @@ class TaskThread extends Thread {
 				}
 			}
 		}
+		
 	}
 	
 }
@@ -152,9 +158,9 @@ class Task {
 	private readonly server: ServerMain;
 	public readonly runId: string;
 	
-	public constructor (server: ServerMain) {
+	public constructor (server: ServerMain, taskIdRandomizer: Random) {
 		this.server = server;
-		this.runId = randomUniform(100000, 999999)().toString();
+		this.runId = taskIdRandomizer.int(0, Number.MAX_SAFE_INTEGER).toString();
 	}
 	
 	public async run (): Promise<void> {
