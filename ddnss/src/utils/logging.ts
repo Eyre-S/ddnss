@@ -63,8 +63,10 @@ export class Logger {
 			return
 		}
 		
-		// Handle backspace
-		if (char === '\u0008') {
+		// Handle backspace(\u007f)
+		//  seems that it should be \u0008, and it is exactly what works on older version,
+		//  but it suddenly does not work, and \u007f works instead on my terminal
+		if (char === '\u007f') {
 			// backspace
 			if (this.inputBuffer.strip.length > 0) {
 				let before = this.inputBeforeCursor().slice(0, -1)

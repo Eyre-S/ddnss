@@ -1,5 +1,5 @@
 import random from 'random'
-import { normalError } from "./logging";
+import { normalError, strip } from "./logging";
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 interface SleepTimeout {
@@ -41,8 +41,7 @@ export abstract class Thread {
 	
 	public start (): void {
 		if (this.state !== 'preparing') {
-			// TODO: IllegalThreadStateError.NotStartableThreadError
-			throw new Error("This thread has already been started.");
+			throw new IllegalThreadStateError.ThreadAlreadyStartedError();
 		}
 		this.state = 'running';
 		Thread.storage.run<Promise<void>>(this, () => {
@@ -66,30 +65,13 @@ export abstract class Thread {
 	}
 	
 	private executeSleep (ms: number): Promise<void> {
-		// return new Promise<void>((resolve) => {
-		// 	const int = this.interrupted()
-		// 	if (int !== null) {
-		// 		throw new InterruptedError("Thread was interrupted.", int);
-		// 	}
-		// 	if (this.sleepingTimeout !== null) {
-		// 		throw new Error("This thread is already sleeping.");
-		// 	}
-		// 	this.sleepingTimeout = {
-		// 		timeout: setTimeout(() => {
-		// 			this.sleepingTimeout = null;
-		// 			resolve();
-		// 		}, ms),
-		// 		resolve
-		// 	};
-		// });
 		const promise = Promise.withResolvers<void>()
 		const int = this.interrupted()
 		if (int !== null) {
 			throw new InterruptedError("Thread was interrupted during sleep!", int);
 		}
 		if (this.sleepingTimeout !== null) {
-			// TODO: IllegalThreadStateError.AlreadySleepingError
-			throw new Error("This thread is already sleeping.");
+			throw new IllegalThreadStateError.AlreadySleepingError();
 		}
 		this.sleepingTimeout = {
 			timeout: setTimeout(() => {
@@ -108,15 +90,13 @@ export abstract class Thread {
 			this.sleepingTimeout = null;
 			temp.resolve();
 		} else {
-			// TODO: IllegalThreadStateError.NotSleepingError
-			throw new Error("This thread is not sleeping.");
+			throw new IllegalThreadStateError.NotSleepingError();
 		}
 	}
 	
 	public interrupt <T> (param?: T): void {
 		if (this.state !== 'running') {
-			// TODO: IllegalThreadStateError.NotRunningError
-			throw new Error("This thread is not running.");
+			throw new IllegalThreadStateError.NotRunningError();
 		}
 		this.interruptedState = new InterruptingParameter<T>(param);
 		if (this.sleepingTimeout !== null) {
@@ -131,6 +111,49 @@ export abstract class Thread {
 	}
 	
 	public abstract run (): Promise<void>;
+	
+}
+
+export class IllegalThreadStateError extends Error {
+	public constructor (message: string) {
+		super(message);
+	}
+}
+
+export namespace IllegalThreadStateError {
+	export class ThreadAlreadyStartedError extends IllegalThreadStateError {
+		public constructor () {
+			super("This thread has already been started, it cannot be started again.");
+		}
+	}
+	
+	export class AlreadySleepingError extends IllegalThreadStateError {
+		public constructor () {
+			super(strip(`
+				|This thread is already in sleeping state.
+				|  If you occurs this error, that probably means there are somewhere calls sleep()
+				|    without using await keyword, or a sleep() is called outside this thread.
+				|  Please check your code to fix those, due to they may cause unexpected behaviors.
+			`));
+		}
+	}
+	
+	export class NotSleepingError extends IllegalThreadStateError {
+		public constructor () {
+			super(`
+				|This thread is not sleeping so that stop sleeping is not possible.
+				|  This is probably a bug of the thread implementation, please report to the developer.
+			`);
+		}
+	}
+	
+	export class NotRunningError extends IllegalThreadStateError {
+		public constructor () {
+			super(`
+				|This thread is not running, so that interrupting is not possible.
+			`);
+		}
+	}
 	
 }
 
